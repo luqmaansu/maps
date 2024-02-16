@@ -27,9 +27,12 @@
         </div>
         <div class="col-lg-8 order-1 order-lg-2">
             <div id="map" style="height:75vh;" class="bg-secondary"></div>
-            <div class="d-flex gap-3 m-2">
-                <label for="catchmentRadiusInput" class="form-label text-nowrap">Catchment radius</label>
-                <input type="range" class="form-range" id="catchmentRadiusInput" min=0 max=20 step=1 value=5 style="width:100px;">
+            <div class="d-flex gap-2 m-2">
+                <div class="form-check form-switch">
+                    <label for="catchmentRadiusSwitch" class="form-label text-nowrap">Catchment radius</label>
+                    <input class="form-check-input" type="checkbox" role="switch" id="catchmentRadiusSwitch" checked>
+                </div>
+                <input type="range" class="form-range" id="catchmentRadiusInput" min=1 max=20 step=1 value=5 style="width:100px;">
                 <div>
                     <span id="catchmentRadiusValue">
                         5
@@ -44,9 +47,27 @@
 
     <script>
 
+        // Element shortcuts
+        const catchmentRadiusSwitch = document.getElementById('catchmentRadiusSwitch');
+        const catchmentRadiusInput = document.getElementById('catchmentRadiusInput');
+        const catchmentRadiusValue = document.getElementById('catchmentRadiusValue');
+        const catchmentRadiusUnit = document.getElementById('catchmentRadiusUnit');
+
         // when catchmentRadiusInput is changed, update the value of catchmentRadiusValue
-        document.getElementById('catchmentRadiusInput').addEventListener('input', function () {
-            document.getElementById('catchmentRadiusValue').innerText = this.value;
+        catchmentRadiusInput.addEventListener('input', function () {
+            catchmentRadiusValue.innerText = this.value;
+        });
+
+        // if catchmentRadiusSwitch is off, disable catchmentRadiusInput
+        catchmentRadiusSwitch.addEventListener('change', function () {
+            catchmentRadiusInput.disabled = !this.checked;
+            if (!this.checked) {
+                catchmentRadiusValue.innerText = '';
+                catchmentRadiusUnit.innerText = '';
+            } else {
+                catchmentRadiusValue.innerText = catchmentRadiusInput.value;
+                catchmentRadiusUnit.innerText = 'km';
+            }
         });
 
     </script>

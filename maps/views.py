@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from django.views.generic import ListView
+from .models import Location
 
-# Create your views here.
+
+class MapView(ListView):
+    model = Location
+    template_name = "maps/map.html"

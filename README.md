@@ -8,7 +8,9 @@ This web application is developed using Django to visualize the locations of Sub
 4. Bootstrap 5.3.2
 
 # For end users
-1. The web application can be accessed at `luqmaans.pythonanywhere.com`
+The web application can be accessed at `luqmaans.pythonanywhere.com`
+   ![alt text](refs/image.png)
+
 
 # For developers
 ### Important setup notes
@@ -32,8 +34,8 @@ The geographical coordinates for each location alongside other attributes can be
 The single search bar is a simple `icontains` search on 4 fields: "name", "address", "latitude", and "longitude" and returns all instances that match any one of the fields.
 
 ### Priority improvements
-If more time and resource was available, the following is a list of proposed improvements that can be done, listed in priority:
+If more time and resource is granted, the following is a list of proposed improvements to be done, listed in priority:
 
-1. Search box functionality to process natural-language-like queries as per requirement.
-2. Use Django's GIS package properly
-3. Use GIS DB calculations to retrieve nearby locations within the specified range
+1. Search box functionality to process natural-language-like queries as per outlined requirement
+2. Use Django's GIS package for a more scalable and proper development practice 
+3. Use GIS DB calculations instead of stored `Distance` instances to retrieve nearby locations within the specified range

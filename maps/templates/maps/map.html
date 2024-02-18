@@ -2,6 +2,15 @@
 {% block title %}
     Maps
 {% endblock title %}
+{% block head %}
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+{% endblock head %}
 {% block content %}
     <div class="mb-4 d-flex gap-2">
         <input type="text"
@@ -9,17 +18,21 @@
                placeholder="Search for something...">
     </div>
     <div class="row g-2" style="height: 75vh;">
-        <div class="col-lg-4 d-flex flex-column order-2 order-lg-1" style="height: 100%;">
-            <div id="locationContainer" class="list-group list-group-numbered overflow-auto flex-grow-1">
+        <div class="col-lg-4 d-flex flex-column order-2 order-lg-1"
+             style="height: 100%">
+            <div id="locationContainer"
+                 class="list-group list-group-numbered overflow-auto flex-grow-1">
                 {# Dynamic content will be loaded here #}
             </div>
-            <div id="loadingIndicator" class="mx-2" style="display:none;">Loading...
+            <div id="loadingIndicator" class="mx-2" style="display:none;">
+                Loading...
                 <div class="spinner-border spinner-border-sm" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
             <div id="errorIndicator" class="mx-2" style="display:none;">Error loading data. Please try again.</div>
-            <div id="emptyIndicator" class="mx-2" style="display:none;">No results found.
+            <div id="emptyIndicator" class="mx-2" style="display:none;">
+                No results found.
                 <a href="#" onclick="fetchData()">Try again</a>
             </div>
             <div id="locationDataInfoDiv" class="mx-2 mt-3" style="display:none;">
@@ -149,5 +162,16 @@
         fetchData();
         
 
+    </script>
+    <style></style>
+    <script>
+        var map = L.map('map', {
+            attributionControl: false
+        }).setView(
+            [3.1319, 101.6841], 13
+        );
+        
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        }).addTo(map);
     </script>
 {% endblock content %}

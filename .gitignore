@@ -17,3 +17,5 @@ media/
 
 # Virtual environment
 venv/
+
+local_settings.py

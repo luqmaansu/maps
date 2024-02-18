@@ -66,6 +66,18 @@
             </div>
         </div>
     </div>
+
+    <script>
+        var map = L.map('map', {
+            attributionControl: false
+        }).setView(
+            [3.1319, 101.6841], 13
+        );
+        
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        }).addTo(map);
+    </script>
+
     <script>
         // Element shortcuts
         const catchmentRadiusSwitch = document.getElementById('catchmentRadiusSwitch');
@@ -97,6 +109,7 @@
         const locationDataInfoDiv = document.getElementById('locationDataInfoDiv');
         const locationDataInfoValue = document.getElementById('locationDataInfoValue');
         let info = '';
+        const idToMarkerMap = {}; // Object to store id-marker associations
 
         function fetchData() {
             loadingIndicator.style.display = 'block';
@@ -122,23 +135,56 @@
                     console.error('There has been a problem with your fetch operation:', error);
                 });
         }
-        
+
+        // Event delegation on locationContainer
+        locationContainer.addEventListener('click', function(event) {
+            let locationItem = event.target.closest('.list-group-item');;
+            if (!locationItem) return; // Exit if no list-group-item was clicked
+
+            const { id, latitude, longitude } = locationItem.dataset;
+            const marker = idToMarkerMap[id];
+            
+            marker.openPopup();
+            map.panTo(new L.LatLng(latitude, longitude));
+
+            handleCatchmentRadius(latitude, longitude);
+        });
+
+        function toggleEmptyState() {
+            emptyIndicator.style.display = 'block';
+            loadingIndicator.style.display = 'none';
+            locationContainer.style.display = 'none';
+            locationDataInfoDiv.style.display = 'none';
+        }
+
+        function toggleDataExistsState() {
+            loadingIndicator.style.display = 'none';
+            locationContainer.style.display = 'block';
+            locationDataInfoDiv.style.display = 'block';
+        }
+
+                
         function renderData(data, info) {
-            const container = locationContainer;
-            container.innerHTML = ''; // Clear previous content
+            locationContainer.innerHTML = ''; // Clear previous content
+
+            // Clear existing markers
+            if (window.locationMarkers) {
+                window.locationMarkers.forEach(marker => map.removeLayer(marker));
+            }
+            window.locationMarkers = [];
         
             // Check if data is empty and update the container immediately
             if (data.length === 0) {
-                emptyIndicator.style.display = 'block';
-                loadingIndicator.style.display = 'none';
-                locationContainer.style.display = 'none';
-                locationDataInfoDiv.style.display = 'none';
+                toggleEmptyState();
                 return;
             } else {
                 data.forEach(object => { // Construct new content
                     const locationElement = document.createElement('a');
                     locationElement.href = '#';
                     locationElement.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
+                    locationElement.dataset.id = object.id;
+                    locationElement.dataset.latitude = object.latitude;
+                    locationElement.dataset.longitude = object.longitude;
                     locationElement.innerHTML = `
                         <div class="ms-2 me-auto">
                             <h6 class="text-light">${object.name}</h6>
@@ -148,30 +194,32 @@
                             </ul>
                         </div>
                     `;
-                    container.appendChild(locationElement);
+                    locationContainer.appendChild(locationElement);
+
+                    // Create a marker and add it to the map
+                    const marker = L.marker([object.latitude, object.longitude]).addTo(map);
+                    const popupContent = `
+                        <b>${object.name}</b>
+                        <p class="my-1">${object.address}</p>
+                        <ul class="mb-1">
+                            ${object.opening_hours.map(hrs => `<li>${hrs}</li>`).join('')}
+                        </ul>
+                    `;
+                    marker.bindPopup(popupContent);
+                    idToMarkerMap[object.id] = marker;
+                    window.locationMarkers.push(marker);
+                    
+
                 });
                 locationDataInfoValue.innerText = info;
             }
-            loadingIndicator.style.display = 'none';
-            locationContainer.style.display = 'block';
-            locationDataInfoDiv.style.display = 'block';
+            toggleDataExistsState();
         }
-        
         
         // Initial fetch when page loads
         fetchData();
         
 
     </script>
-    <style></style>
-    <script>
-        var map = L.map('map', {
-            attributionControl: false
-        }).setView(
-            [3.1319, 101.6841], 13
-        );
-        
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        }).addTo(map);
-    </script>
+
 {% endblock content %}

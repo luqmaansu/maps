@@ -12,12 +12,15 @@
             crossorigin=""></script>
 {% endblock head %}
 {% block content %}
+    {# Search bar #}
     <div class="mb-4 d-flex gap-2">
         <input type="text"
                class="form-control form-control-lg"
                placeholder="Search for something...">
     </div>
+    {# Main content #}
     <div class="row g-2" style="height: 75vh;">
+        {# Location list #}
         <div class="col-lg-4 d-flex flex-column order-2 order-lg-1"
              style="height: 100%">
             <div id="locationContainer"
@@ -40,9 +43,11 @@
                 <a href="#" onclick="fetchData()">Reload</a>
             </div>
         </div>
+        {# Map and widgets #}
         <div class="col-lg-8 d-flex flex-column order-1 order-lg-2">
             <div id="map" class="bg-secondary flex-grow-1"></div>
             <div id="mapWidgets" class="mt-2 d-flex gap-4 small">
+                {# Show catchment radius toggle #}
                 <div class="d-flex gap-2 align-items-center">
                     <div class="form-check form-switch mt-2">
                         <label for="catchmentRadiusSwitch" class="form-label mb-0 text-nowrap">Show catchment radius (5 km)</label>
@@ -53,10 +58,12 @@
                                checked>
                     </div>
                 </div>
+                {# Legend 1 #}
                 <div class="d-flex gap-2 align-items-center">
                     <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png" alt="" height="24px;">
                     <span>Has location within catchment radius</span>
                 </div>
+                {# Legend 2 #}
                 <div class="d-flex gap-2 align-items-center">
                     <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png" alt="" height="24px;">
                     <span>No location within catchment radius</span>
@@ -72,8 +79,7 @@
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
             ]
         }).setView(
-            // Defaults to somewhere in Kuala Lumpur
-            [3.1319, 101.6841], 13
+            [3.1319, 101.6841], 13 // Defaults to somewhere in Kuala Lumpur
         );
     </script>
 
@@ -87,7 +93,8 @@
         const locationDataInfoValue = document.getElementById('locationDataInfoValue');
         let info = '';
         const idToMarkerMap = {}; // Object to store id-marker associations
-
+        
+        // Fetch data from the server for both the map and the location list
         function fetchData() {
             loadingIndicator.style.display = 'block';
             errorIndicator.style.display = 'none';
@@ -95,7 +102,7 @@
             emptyIndicator.style.display = 'none';
             locationDataInfoDiv.style.display = 'none';
 
-            rangeValue = 5;
+            rangeValue = 5; // Default catchment radius
         
             fetch('{% url "maps:api-location-list" %}?range=' + rangeValue)
                 .then(response => {

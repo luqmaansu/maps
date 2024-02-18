@@ -31,7 +31,7 @@ This relates to why `Distance` is stored as a database table instead of using GI
 The geographical coordinates for each location alongside other attributes can be retrieved via a GET API request at `api/locations/`. It accepts an optional query parameter `range`, e.g., `api/locations/?range=5` which will also return nearby locations with the given value in km, queried on `Distance`.
 
 ### Query search box
-The single search bar is a simple `icontains` search on 4 fields: "name", "address", "latitude", and "longitude" and returns all instances that match any one of the fields.
+The single search bar is a simple `icontains` search on 4 fields: "name", "address", "latitude", and "longitude" and returns all instances that match any one of the fields. The searching does not use any RAG, LLM or NLP due to unfamiliarity and time constraints.
 
 ### Priority improvements
 If more time and resource is granted, the following is a list of proposed improvements to be done, listed in priority:

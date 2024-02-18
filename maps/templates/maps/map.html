@@ -14,7 +14,8 @@
 {% block content %}
     {# Search bar #}
     <div class="mb-4 d-flex gap-2">
-        <input type="text"
+        <input id="searchInput"
+               type="text"
                class="form-control form-control-lg"
                placeholder="Search for something...">
     </div>
@@ -60,18 +61,21 @@
                 </div>
                 {# Legend 1 #}
                 <div class="d-flex gap-2 align-items-center">
-                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png" alt="" height="24px;">
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"
+                         alt=""
+                         height="24px;">
                     <span>Has location within catchment radius</span>
                 </div>
                 {# Legend 2 #}
                 <div class="d-flex gap-2 align-items-center">
-                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png" alt="" height="24px;">
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
+                         alt=""
+                         height="24px;">
                     <span>No location within catchment radius</span>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
         var map = L.map('map', {
             attributionControl: false,
@@ -82,9 +86,7 @@
             [3.1319, 101.6841], 13 // Defaults to somewhere in Kuala Lumpur
         );
     </script>
-
     <script>
-
         const loadingIndicator = document.getElementById('loadingIndicator');
         const errorIndicator = document.getElementById('errorIndicator');
         const locationContainer = document.getElementById('locationContainer');
@@ -101,10 +103,12 @@
             locationContainer.style.display = 'none';
             emptyIndicator.style.display = 'none';
             locationDataInfoDiv.style.display = 'none';
+            
+            searchValue = document.getElementById('searchInput').value;
 
             rangeValue = 5; // Default catchment radius
         
-            fetch('{% url "maps:api-location-list" %}?range=' + rangeValue)
+            fetch('{% url "maps:api-location-list" %}?range=' + rangeValue + '&general_search=' + searchValue)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -273,11 +277,17 @@
                 });
             }
         });
+
+        // When the search input changes, and then idle for 500ms, execute fetchData
+        let searchTimeout = null;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(fetchData, 500);
+        });
         
         // Initial fetch when page loads
         fetchData();
         
 
     </script>
-
 {% endblock content %}

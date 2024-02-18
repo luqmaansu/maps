@@ -3,50 +3,57 @@
     Maps
 {% endblock title %}
 {% block content %}
-    <div class="mb-4">
-        <input type="text" class="form-control form-control-lg" placeholder="Search for something...">
+    <div class="mb-4 d-flex gap-2">
+        <input type="text"
+               class="form-control form-control-lg"
+               placeholder="Search for something...">
     </div>
-    <div class="row g-2">
-        <div class="col-lg-4 order-2 order-lg-1">
-            <div class="list-group list-group-numbered"
-                 style="height:70vh;
-                        overflow-y: scroll">
-                {% for object in object_list %}
-                    <a href="#"
-                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-                        <div class="ms-2 me-auto">
-                            <h6 class="text-light">{{ object.name }}</h6>
-                            <span class="d-block mb-2">{{ object.address }}</span>
-                            <ul class="mb-1">
-                                {% for hrs in object.opening_hours %}<li>{{ hrs }}</li>{% endfor %}
-                            </ul>
-                        </div>
-                    </a>
-                {% endfor %}
+    <div class="row g-2" style="height: 75vh;">
+        <div class="col-lg-4 d-flex flex-column order-2 order-lg-1" style="height: 100%;">
+            <div id="locationContainer" class="list-group list-group-numbered overflow-auto flex-grow-1">
+                {# Dynamic content will be loaded here #}
+            </div>
+            <div id="loadingIndicator" class="mx-2" style="display:none;">Loading...
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div id="errorIndicator" class="mx-2" style="display:none;">Error loading data. Please try again.</div>
+            <div id="emptyIndicator" class="mx-2" style="display:none;">No results found.
+                <a href="#" onclick="fetchData()">Try again</a>
+            </div>
+            <div id="locationDataInfoDiv" class="mx-2 mt-3" style="display:none;">
+                <span id="locationDataInfoValue"></span>.
+                <a href="#" onclick="fetchData()">Refresh</a>
             </div>
         </div>
-        <div class="col-lg-8 order-1 order-lg-2">
-            <div id="map" style="height:70vh;" class="bg-secondary"></div>
-            <div class="d-flex gap-2 m-2">
+        <div class="col-lg-8 d-flex flex-column order-1 order-lg-2">
+            <div id="map" class="bg-secondary flex-grow-1"></div>
+            <div id="mapWidgets" class="d-flex gap-2 mx-2 mt-2 align-self-start">
                 <div class="form-check form-switch">
-                    <label for="catchmentRadiusSwitch" class="form-label text-nowrap">Catchment radius</label>
-                    <input class="form-check-input" type="checkbox" role="switch" id="catchmentRadiusSwitch" checked>
+                    <label for="catchmentRadiusSwitch" class="form-label mb-0 text-nowrap">Catchment radius</label>
+                    <input class="form-check-input"
+                           type="checkbox"
+                           role="switch"
+                           id="catchmentRadiusSwitch"
+                           checked>
                 </div>
-                <input type="range" class="form-range" id="catchmentRadiusInput" min=1 max=20 step=1 value=5 style="width:100px;">
+                <input type="range"
+                       class="form-range"
+                       id="catchmentRadiusInput"
+                       min="1"
+                       max="20"
+                       step="1"
+                       value="5"
+                       style="width:100px">
                 <div>
-                    <span id="catchmentRadiusValue">
-                        5
-                    </span>
-                    <span id="catchmentRadiusUnit">
-                        km
-                    </span>
+                    <span id="catchmentRadiusValue">5</span>
+                    <span id="catchmentRadiusUnit">km</span>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
-
         // Element shortcuts
         const catchmentRadiusSwitch = document.getElementById('catchmentRadiusSwitch');
         const catchmentRadiusInput = document.getElementById('catchmentRadiusInput');
@@ -70,6 +77,77 @@
             }
         });
 
-    </script>
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorIndicator = document.getElementById('errorIndicator');
+        const locationContainer = document.getElementById('locationContainer');
+        const emptyIndicator = document.getElementById('emptyIndicator');
+        const locationDataInfoDiv = document.getElementById('locationDataInfoDiv');
+        const locationDataInfoValue = document.getElementById('locationDataInfoValue');
+        let info = '';
 
+        function fetchData() {
+            loadingIndicator.style.display = 'block';
+            errorIndicator.style.display = 'none';
+            locationContainer.style.display = 'none';
+            emptyIndicator.style.display = 'none';
+            locationDataInfoDiv.style.display = 'none';
+        
+            fetch('{% url "maps:api-location-list" %}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    info = response.headers.get('info');
+                    return response.json().then(data => ({ data, info }));
+                })
+                .then(({ data, info }) => {
+                    renderData(data, info);
+                })
+                .catch(error => {
+                    loadingIndicator.style.display = 'none';
+                    errorIndicator.style.display = 'block';
+                    console.error('There has been a problem with your fetch operation:', error);
+                });
+        }
+        
+        function renderData(data, info) {
+            const container = locationContainer;
+            container.innerHTML = ''; // Clear previous content
+        
+            // Check if data is empty and update the container immediately
+            if (data.length === 0) {
+                emptyIndicator.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+                locationContainer.style.display = 'none';
+                locationDataInfoDiv.style.display = 'none';
+                return;
+            } else {
+                data.forEach(object => { // Construct new content
+                    const locationElement = document.createElement('a');
+                    locationElement.href = '#';
+                    locationElement.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
+                    locationElement.innerHTML = `
+                        <div class="ms-2 me-auto">
+                            <h6 class="text-light">${object.name}</h6>
+                            <span class="d-block mb-2">${object.address}</span>
+                            <ul class="mb-1">
+                                ${object.opening_hours.map(hrs => `<li>${hrs}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    container.appendChild(locationElement);
+                });
+                locationDataInfoValue.innerText = info;
+            }
+            loadingIndicator.style.display = 'none';
+            locationContainer.style.display = 'block';
+            locationDataInfoDiv.style.display = 'block';
+        }
+        
+        
+        // Initial fetch when page loads
+        fetchData();
+        
+
+    </script>
 {% endblock content %}

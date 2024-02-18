@@ -33,11 +33,11 @@
             <div id="errorIndicator" class="mx-2" style="display:none;">Error loading data. Please try again.</div>
             <div id="emptyIndicator" class="mx-2" style="display:none;">
                 No results found.
-                <a href="#" onclick="fetchData()">Try again</a>
+                <a href="#" onclick="fetchData()">Reload.</a>
             </div>
             <div id="locationDataInfoDiv" class="mx-2 mt-3" style="display:none;">
                 <span id="locationDataInfoValue"></span>.
-                <a href="#" onclick="fetchData()">Refresh</a>
+                <a href="#" onclick="fetchData()">Reload</a>
             </div>
         </div>
         <div class="col-lg-8 d-flex flex-column order-1 order-lg-2">
@@ -69,13 +69,14 @@
 
     <script>
         var map = L.map('map', {
-            attributionControl: false
+            attributionControl: false,
+            layers: [
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
+            ]
         }).setView(
+            // Defaults to somewhere in Kuala Lumpur
             [3.1319, 101.6841], 13
         );
-        
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        }).addTo(map);
     </script>
 
     <script>
@@ -167,9 +168,14 @@
         function renderData(data, info) {
             locationContainer.innerHTML = ''; // Clear previous content
 
-            // Clear existing markers
+            // Clear existing markers and catchment radius
             if (window.locationMarkers) {
                 window.locationMarkers.forEach(marker => map.removeLayer(marker));
+                map.eachLayer(function (layer) {
+                    if (layer instanceof L.Circle) {
+                        map.removeLayer(layer);
+                    }
+                });
             }
             window.locationMarkers = [];
         

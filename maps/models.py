@@ -12,3 +12,20 @@ class Location(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Distance(models.Model):
+    origin = models.ForeignKey(
+        Location, on_delete=models.CASCADE, related_name="origin"
+    )
+    destination = models.ForeignKey(
+        Location, on_delete=models.CASCADE, related_name="destination"
+    )
+    distance = models.FloatField(help_text="Distance in km")
+
+    def __str__(self):
+        return f"{self.origin} - {self.destination}"
+
+    # Unique together origin and destination
+    class Meta:
+        unique_together = ("origin", "destination")

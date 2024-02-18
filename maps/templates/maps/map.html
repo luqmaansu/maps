@@ -42,26 +42,24 @@
         </div>
         <div class="col-lg-8 d-flex flex-column order-1 order-lg-2">
             <div id="map" class="bg-secondary flex-grow-1"></div>
-            <div id="mapWidgets" class="d-flex gap-2 mx-2 mt-2 align-self-start">
-                <div class="form-check form-switch">
-                    <label for="catchmentRadiusSwitch" class="form-label mb-0 text-nowrap">Catchment radius</label>
-                    <input class="form-check-input"
-                           type="checkbox"
-                           role="switch"
-                           id="catchmentRadiusSwitch"
-                           checked>
+            <div id="mapWidgets" class="mt-2 d-flex gap-4 small">
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="form-check form-switch mt-2">
+                        <label for="catchmentRadiusSwitch" class="form-label mb-0 text-nowrap">Show catchment radius (5 km)</label>
+                        <input class="form-check-input"
+                               type="checkbox"
+                               role="switch"
+                               id="catchmentRadiusSwitch"
+                               checked>
+                    </div>
                 </div>
-                <input type="range"
-                       class="form-range"
-                       id="catchmentRadiusInput"
-                       min="1"
-                       max="20"
-                       step="1"
-                       value="5"
-                       style="width:100px">
-                <div>
-                    <span id="catchmentRadiusValue">5</span>
-                    <span id="catchmentRadiusUnit">km</span>
+                <div class="d-flex gap-2 align-items-center">
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png" alt="" height="24px;">
+                    <span>Has location within catchment radius</span>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png" alt="" height="24px;">
+                    <span>No location within catchment radius</span>
                 </div>
             </div>
         </div>
@@ -80,28 +78,6 @@
     </script>
 
     <script>
-        // Element shortcuts
-        const catchmentRadiusSwitch = document.getElementById('catchmentRadiusSwitch');
-        const catchmentRadiusInput = document.getElementById('catchmentRadiusInput');
-        const catchmentRadiusValue = document.getElementById('catchmentRadiusValue');
-        const catchmentRadiusUnit = document.getElementById('catchmentRadiusUnit');
-
-        // when catchmentRadiusInput is changed, update the value of catchmentRadiusValue
-        catchmentRadiusInput.addEventListener('input', function () {
-            catchmentRadiusValue.innerText = this.value;
-        });
-
-        // if catchmentRadiusSwitch is off, disable catchmentRadiusInput
-        catchmentRadiusSwitch.addEventListener('change', function () {
-            catchmentRadiusInput.disabled = !this.checked;
-            if (!this.checked) {
-                catchmentRadiusValue.innerText = '';
-                catchmentRadiusUnit.innerText = '';
-            } else {
-                catchmentRadiusValue.innerText = catchmentRadiusInput.value;
-                catchmentRadiusUnit.innerText = 'km';
-            }
-        });
 
         const loadingIndicator = document.getElementById('loadingIndicator');
         const errorIndicator = document.getElementById('errorIndicator');
@@ -118,8 +94,10 @@
             locationContainer.style.display = 'none';
             emptyIndicator.style.display = 'none';
             locationDataInfoDiv.style.display = 'none';
+
+            rangeValue = 5;
         
-            fetch('{% url "maps:api-location-list" %}')
+            fetch('{% url "maps:api-location-list" %}?range=' + rangeValue)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -137,19 +115,25 @@
                 });
         }
 
-        // Event delegation on locationContainer
-        locationContainer.addEventListener('click', function(event) {
-            let locationItem = event.target.closest('.list-group-item');;
-            if (!locationItem) return; // Exit if no list-group-item was clicked
+        function handleCatchmentRadius(latitude, longitude) {
+            // Clear existing catchment radius
+            map.eachLayer(function (layer) {
+                if (layer instanceof L.Circle) {
+                    map.removeLayer(layer);
+                }
+            });
 
-            const { id, latitude, longitude } = locationItem.dataset;
-            const marker = idToMarkerMap[id];
-            
-            marker.openPopup();
-            map.panTo(new L.LatLng(latitude, longitude));
-
-            handleCatchmentRadius(latitude, longitude);
-        });
+            if (document.getElementById('catchmentRadiusSwitch').checked) {
+                // Add catchment radius
+                L.circle([latitude, longitude], {
+                    color: 'blue',
+                    fillColor: '#007bff',
+                    fillOpacity: 0.2,
+                    weight: 0.5,
+                    radius: rangeValue * 1000
+                }).addTo(map);
+            }
+        }
 
         function toggleEmptyState() {
             emptyIndicator.style.display = 'block';
@@ -202,25 +186,86 @@
                     `;
                     locationContainer.appendChild(locationElement);
 
+                    if (object.has_nearby_locations === true) {
+                        var markerIcon = new L.Icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        });
+                    } else {
+                        var markerIcon = new L.Icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        });
+                    }
+
                     // Create a marker and add it to the map
-                    const marker = L.marker([object.latitude, object.longitude]).addTo(map);
+                    const marker = L.marker(
+                        [object.latitude, object.longitude],
+                        {icon: markerIcon},
+                    ).addTo(map);
                     const popupContent = `
                         <b>${object.name}</b>
                         <p class="my-1">${object.address}</p>
-                        <ul class="mb-1">
+                        <ul class="mb-2">
                             ${object.opening_hours.map(hrs => `<li>${hrs}</li>`).join('')}
                         </ul>
+                        <div class="collapse" id="nearbyLocationsCollapse${object.id}">
+                            Nearby locations:
+                            <ol class="mb-1">
+                                ${object.nearby_locations.map(loc => `<li>${loc}</li>`).join('')}
+                            </ol>
+                        </div>
+                        <a href="#" data-bs-toggle="collapse" data-bs-target="#nearbyLocationsCollapse${object.id}" aria-expanded="false" aria-controls="nearbyLocationsCollapse${object.id}">
+                            Show nearby locations (${object.nearby_locations.length})
+                        </a>
                     `;
                     marker.bindPopup(popupContent);
                     idToMarkerMap[object.id] = marker;
                     window.locationMarkers.push(marker);
-                    
+
+                    // When marker is clicked, execute handleCatchmentRadius
+                    marker.on('click', function() {
+                        handleCatchmentRadius(object.latitude, object.longitude);
+                    });
 
                 });
                 locationDataInfoValue.innerText = info;
             }
             toggleDataExistsState();
         }
+
+        // listen to locationContainer click event
+        locationContainer.addEventListener('click', function(event) {
+            let locationItem = event.target.closest('.list-group-item');;
+            if (!locationItem) return; // Exit if no list-group-item was clicked
+
+            const { id, latitude, longitude } = locationItem.dataset;
+            const marker = idToMarkerMap[id];
+            
+            marker.openPopup();
+            map.panTo(new L.LatLng(latitude, longitude));
+
+            handleCatchmentRadius(latitude, longitude);
+        });
+
+        // listen to catchmentRadiusSwitch change event
+        document.getElementById('catchmentRadiusSwitch').addEventListener('change', function() {
+            if (!this.checked) {
+                map.eachLayer(function (layer) {
+                    if (layer instanceof L.Circle) {
+                        map.removeLayer(layer);
+                    }
+                });
+            }
+        });
         
         // Initial fetch when page loads
         fetchData();
